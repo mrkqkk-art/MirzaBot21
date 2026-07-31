@@ -1,6 +1,6 @@
 import sqlite3
 
-DB = "users.db"
+DB = "mirza.db"
 
 
 def connect():
@@ -11,11 +11,35 @@ def create_db():
     con = connect()
     cur = con.cursor()
 
+    # کاربران
     cur.execute("""
     CREATE TABLE IF NOT EXISTS users(
         id INTEGER PRIMARY KEY,
         username TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # سرویس‌ها
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS services(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        name TEXT,
+        config TEXT,
+        volume TEXT,
+        days INTEGER,
         status TEXT DEFAULT 'active'
+    )
+    """)
+
+    # سفارش‌ها
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS orders(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        amount INTEGER,
+        status TEXT DEFAULT 'pending'
     )
     """)
 
@@ -30,9 +54,8 @@ def add_user(user_id, username):
 
     cur.execute(
         """
-        INSERT OR IGNORE INTO users
-        (id, username)
-        VALUES (?, ?)
+        INSERT OR IGNORE INTO users(id, username)
+        VALUES(?,?)
         """,
         (user_id, username)
     )
@@ -50,38 +73,43 @@ def users_count():
         "SELECT COUNT(*) FROM users"
     )
 
-    count = cur.fetchone()[0]
+    result = cur.fetchone()[0]
 
     con.close()
 
-    return count
+    return result
 
 
-def get_users():
+def add_service(user_id, name, config, volume, days):
 
     con = connect()
     cur = con.cursor()
 
     cur.execute(
-        "SELECT id FROM users WHERE status='active'"
-    )
-
-    users = cur.fetchall()
-
-    con.close()
-
-    return users
-
-
-def block_user(user_id):
-
-    con = connect()
-    cur = con.cursor()
-
-    cur.execute(
-        "UPDATE users SET status='blocked' WHERE id=?",
-        (user_id,)
+        """
+        INSERT INTO services
+        (user_id,name,config,volume,days)
+        VALUES(?,?,?,?,?)
+        """,
+        (user_id,name,config,volume,days)
     )
 
     con.commit()
     con.close()
+
+
+def get_user_services(user_id):
+
+    con = connect()
+    cur = con.cursor()
+
+    cur.execute(
+        "SELECT * FROM services WHERE user_id=?",
+        (user_id,)
+    )
+
+    data = cur.fetchall()
+
+    con.close()
+
+    return data
