@@ -1,13 +1,14 @@
 from telegram.ext import (
     Application,
-    CommandHandler
+    CommandHandler,
+    CallbackQueryHandler
 )
 
 from config import BOT_TOKEN, ADMIN_IDS
 from database import create_db, add_user
-from buttons import main_menu
-from admin_panel import admin_menu
-from user_panel import user_panel
+from buttons import user_menu
+from user_panel import my_services
+from admin_panel import show_admin_panel, admin_stats
 
 
 async def start(update, context):
@@ -20,8 +21,9 @@ async def start(update, context):
     )
 
     await update.message.reply_text(
-        "سلام 👋\nبه ربات خوش آمدید",
-        reply_markup=main_menu()
+        "سلام 👋\n"
+        "به ربات خوش آمدید",
+        reply_markup=user_menu()
     )
 
 
@@ -35,18 +37,31 @@ async def admin(update, context):
         )
         return
 
-    await admin_menu(
+    await show_admin_panel(
         update,
         context
     )
 
 
-async def panel(update, context):
+async def buttons_handler(update, context):
 
-    await user_panel(
-        update,
-        context
-    )
+    query = update.callback_query
+
+    await query.answer()
+
+    if query.data == "my_services":
+        await my_services(
+            update,
+            context
+        )
+
+    elif query.data == "stats":
+
+        if query.from_user.id in ADMIN_IDS:
+            await admin_stats(
+                update,
+                context
+            )
 
 
 def main():
@@ -73,9 +88,8 @@ def main():
     )
 
     app.add_handler(
-        CommandHandler(
-            "panel",
-            panel
+        CallbackQueryHandler(
+            buttons_handler
         )
     )
 
