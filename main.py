@@ -6,7 +6,8 @@ from telegram.ext import (
 from config import BOT_TOKEN, ADMIN_IDS
 from database import create_db, add_user
 from buttons import main_menu
-from admin import admin_panel
+from admin_panel import admin_menu
+from user_panel import user_panel
 
 
 async def start(update, context):
@@ -21,6 +22,30 @@ async def start(update, context):
     await update.message.reply_text(
         "سلام 👋\nبه ربات خوش آمدید",
         reply_markup=main_menu()
+    )
+
+
+async def admin(update, context):
+
+    user_id = update.effective_user.id
+
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text(
+            "⛔ دسترسی ندارید"
+        )
+        return
+
+    await admin_menu(
+        update,
+        context
+    )
+
+
+async def panel(update, context):
+
+    await user_panel(
+        update,
+        context
     )
 
 
@@ -40,11 +65,17 @@ def main():
         )
     )
 
-
     app.add_handler(
         CommandHandler(
             "admin",
-            admin_panel
+            admin
+        )
+    )
+
+    app.add_handler(
+        CommandHandler(
+            "panel",
+            panel
         )
     )
 
